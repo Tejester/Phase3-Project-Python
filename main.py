@@ -3,7 +3,7 @@
 
 import random
 from player import Player
-from rooms import Rooms
+from room import Rooms
 
 player_name = Player.name
 rooms = Rooms.rooms
