@@ -25,6 +25,8 @@ cli.add_command(look)
 
 if __name__ == "__main__":
     while True:
+        click.clear()
+        click.echo("You are in the " + dungeon.player_location.name)
         cmd = click.prompt("What do you want to do?",type=str)
         cmd_parts = cmd.split()
         try:
