@@ -3,7 +3,7 @@ from room import Room
 import random
 import click
 from direction import Direction
-
+import faker
 class DungeonMap:
     def __init__(self):
         self.rooms = {}
@@ -53,6 +53,8 @@ def opposite_direction(direction:Direction.value):
         raise ValueError("Invalid direction: {}".format(direction))
     
 def generate_dungeon(num_rooms):
+    fake = faker.Generator().add_provider(faker.providers.lorem)
+
     # First room is always room 1
     dungeon = DungeonMap()
     first_room = Room(1)

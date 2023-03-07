@@ -1,3 +1,5 @@
+import markovify
+from faker import Faker
 from dungeon_map import DungeonMap,generate_dungeon
 from direction import Direction
 import click
@@ -13,7 +15,7 @@ def go(direction):
 @click.command
 def look():
     for direction in dungeon.rooms[dungeon.player_location].items():
-        click.echo(f"There is a room to the {direction}.")
+        click.echo(f"There is a room to the {direction[0]}.")
 
 @click.group()
 def cli():
