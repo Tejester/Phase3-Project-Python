@@ -41,6 +41,9 @@ def main():
 import random
 from player import Player
 from rooms import Rooms
+<<<<<<< HEAD
+>>>>>>> parent of a00f048 (my commits)
+=======
 >>>>>>> parent of a00f048 (my commits)
 
     player = copy.deepcopy(entity_factories.player)
