@@ -8,3 +8,7 @@ class Room:
         self.room_id = room_id
         self.name = name
         self.contents = contents
+    
+    @property
+    def room_name(self):
+        return self.name
