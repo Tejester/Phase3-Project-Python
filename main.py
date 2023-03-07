@@ -33,9 +33,15 @@ def main():
     )
 
 
+<<<<<<< HEAD
     # tileset = tcod.tileset.load_tilesheet(
     #     "./testsheet.png",8,20,tcod.tileset.CHARMAP_CP437
     # )
+=======
+import random
+from player import Player
+from rooms import Rooms
+>>>>>>> parent of a00f048 (my commits)
 
     player = copy.deepcopy(entity_factories.player)
 
