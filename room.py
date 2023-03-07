@@ -2,6 +2,13 @@
 
 
 class Room:
-    def __init__(self,room_id,contents=[]):
+    def __init__(self,room_id,name,contents=[]):
+        # self.surr = surr
+        # self.desc = desc
         self.room_id = room_id
+        self.name = name
         self.contents = contents
+    
+    @property
+    def room_name(self):
+        return self.name
