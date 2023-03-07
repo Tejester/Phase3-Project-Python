@@ -1,37 +1,32 @@
-#THIS IS FOR TESTING PURPOSE
+from dungeon_map import DungeonMap,generate_dungeon
+from direction import Direction
+import click
 
+dungeon = generate_dungeon(100)
 
-import random
-from player import Player
-from rooms import Rooms
+@click.command
+@click.argument("direction", type=click.Choice([d.value for d in Direction]))
+def go(direction):
+    if dungeon.move_player(direction):
+        click.echo(f"You are now in room {dungeon.player_location}")
 
-player_name = Player.name
-rooms = Rooms.rooms
+@click.command
+def look():
+    for direction in dungeon.rooms[dungeon.player_location].items():
+        click.echo(f"There is a room to the {direction}.")
 
-while True:
-    print('1. Enter Room')
-    choice = input('> ')
+@click.group()
+def cli():
+    pass
+                
+cli.add_command(go)
+cli.add_command(look)
 
-    if choice == "1":
-        curr_room = random.choice(list(rooms))
-        room1 = random.choice(list(rooms))
-        room2 = random.choice(list(rooms)) 
-        print(f'You entered {curr_room}')
-        print('Choose where you want to go next')
-        print("Door 1")
-        print("Door 2")
-        choice = input('> ')
-        if choice == "1":
-            print(f'You entered {room1}')
-
-            print("1 Goback")
-            choice = input('> ')
-            if choice == "1":
-                print(f"you entered {curr_room}")
-
-        elif choice == "2":
-            print(f'You entered {room2}')
-            print("1 Goback")
-            choice = input('> ')
-            if choice == "1":
-                print(f"you entered {curr_room}")
+if __name__ == "__main__":
+    while True:
+        cmd = click.prompt("What do you want to do?",type=str)
+        cmd_parts = cmd.split()
+        try:
+            cli(cmd_parts)
+        except SystemExit:
+            pass
