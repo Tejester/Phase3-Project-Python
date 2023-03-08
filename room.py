@@ -122,12 +122,13 @@ class InteractionMessages(Enum):
 
 # These are the nodes of the graph
 class Room:
-    def __init__(self,room_id,room_name,contents=[]):
+    def __init__(self,room_id,room_name,contents:dict={}):
         # self.surr = surr
         # self.desc = desc
         self.room_id = room_id
         self._room_name = room_name
-        self._contents = contents
+        self.contents = contents
+        self.is_exit = False
 
     # @property
     # def neighbors(self):
@@ -135,7 +136,11 @@ class Room:
     # @neighbors.setter
     # def neighbors(self,neighbors):
     #     self._neighbors = neighbors
-    
+    @property
+    def is_exit(self):
+        return self._is_exit
+    def is_exit(self,is_exit:bool):
+        self._is_exit = is_exit
     @property
     def room_name(self):
         return self._room_name
@@ -152,12 +157,12 @@ class Room:
     # def door(self,door:Door):
     #     self._door = door
     
-    @property
-    def contents(self):
-        return self._contents
+    # @property
+    # def contents(self):
+    #     return self._contents
     
-    @contents.setter
-    def contents(self,contents):
-        self._contents = contents
+    # @contents.setter
+    # def contents(self,contents):
+    #     self._contents = contents
     
 
