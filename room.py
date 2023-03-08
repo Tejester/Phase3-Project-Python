@@ -129,8 +129,16 @@ class Room:
         self._room_name = room_name
         self._contents = contents
         self.is_exit = False
+        self._shrimpified = False
 
-
+    
+    @property
+    def shrimpified(self):
+        return self._shrimpified
+    @shrimpified.setter
+    def shrimpified(self,shrimpified:bool):
+        self._shrimpified = shrimpified
+        
     @property
     def contents(self):
         return self._contents

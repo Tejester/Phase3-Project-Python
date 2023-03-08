@@ -3,7 +3,7 @@ from room import Room,InteractionMessages
 import random
 import click
 from direction import Direction
-from entities import Player, Chameleos
+from entities import Player, Chameleos, ActivityLevels
 from treasure import generate_treasures
 import string
 from queue import Queue
@@ -18,6 +18,14 @@ class DungeonMap:
         self.rooms = {}
         self._player = None
         self._chameleos = None
+        self._noise_scale = 0
+
+    @property
+    def noise_scale(self):
+        return self._noise_scale
+    @noise_scale.setter
+    def noise_scale(self,noise_scale:int):
+        self._noise_scale = noise_scale
 
     @property
     def chameleos(self):
@@ -44,6 +52,16 @@ class DungeonMap:
         self.rooms[room1][direction] = room2
         self.rooms[room2][opposite_direction(direction)] = room1
 
+    def is_neighbor(self, room1:Room, room2:Room) -> Direction:
+        for direction,room in self.rooms[room1].items():
+            if room == room2:
+                return direction
+        return False
+    
+    def in_same_room(self) -> bool:
+        return self._player.position == self._chameleos.position
+    
+
     def set_player_location(self, room:Room):
         self._player.position = room
     
@@ -55,6 +73,35 @@ class DungeonMap:
             click.echo(InteractionMessages.MOVE_BUT_DIRECTION_NOT_EXIST.value)
             return False
         self._player.position = self.rooms[self.player.position][direction]
+        click.echo("You move through the corrodor making as little noise as possible.")
+        self._noise_scale += 1
+        self.chameleos.update_activity_level(self._noise_scale)
+        return True
+    
+    def move_chameleos_towards_player(self):
+        if self._chameleos.position == self._player.position:
+            return
+        elif self.chameleos.position.shrimpified:
+            self.chameleos.eat_shrimp(self.chameleos.position)
+            click.echo("You hear an eating sound.")
+            self._noise_scale = 0
+            self.chameleos.update_activity_level(self._noise_scale)
+        else:
+            click.echo("You hear a rustling in the distance.")
+            path = find_distance(self.rooms,self._chameleos.position,self._player.position,True)
+            click.echo(path)
+            if(len(path)) >= 1:
+                self._chameleos.position = path[1]
+            else:
+                self._chameleos.position = path[0]
+            print("Player Location: ",self._player.position)
+            print("Chameleos Location: ",self._chameleos.position)
+            return True
+
+    def scream(self):
+        click.echo("You scream as loud as you can!")
+        self._noise_scale += 10
+        self.chameleos.update_activity_level(self._noise_scale)
         return True
     
 def opposite_direction(direction:Direction.value):
@@ -78,17 +125,22 @@ def opposite_direction(direction:Direction.value):
         raise ValueError("Invalid direction: {}".format(direction))
     
 # Using BFS to find the shortest path
-def find_distance(rooms:dict,start_room:Room,end_room:Room):
-    visited = set()
+def find_distance(rooms:dict,start_room:Room,end_room:Room,return_visited:bool=False):
+    visited = list()
     queue = Queue()
     queue.put((start_room,0))
 
     while not queue.empty():
         room, distance = queue.get()
         if room == end_room:
+            visited.append(end_room)
             print("DISTANCE: ",distance)
-            return distance
-        visited.add(room)
+            if(return_visited == False):
+                return distance
+            else:
+                return visited
+        else:
+            visited.append(room)
         for direction,new_room in rooms[room].items():
             # print(direction,new_room)
             # print("Visited: ",visited)
@@ -119,7 +171,7 @@ def find_distance(rooms:dict,start_room:Room,end_room:Room):
 
     
     
-def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
+def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room):
     # First room is always room 1
     first_name = random.choice(adjectives)
     second_name = random.choice(places)
@@ -139,8 +191,8 @@ def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
         direction = random.choice(list(Direction))
         # new_door = create_random_door(direction)
         new_content = []
-        new_content = generate_treasures(100)
-        # new_content.append(new_door)
+        new_content = generate_treasures(treasure_generated)
+        # new_content.append(new_door) 
         if direction.value not in dungeon.rooms[random_room]:
             if random.random() < 0.8:
                 letter_count = 0
@@ -171,7 +223,8 @@ def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
     candidate_room = random.choice(list(dungeon.rooms.keys()))
     while find_distance(dungeon.rooms,dungeon.player.position,candidate_room) < 1:
         candidate_room = random.choice(list(dungeon.rooms.keys()))
-    dungeon.set_chameleos_location(candidate_room)
+    else:
+        dungeon.set_chameleos_location(candidate_room)
     
     # while len(new_content) > 0:
     #     random_room = random.choice(list(dungeon.rooms.keys()))
