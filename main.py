@@ -32,7 +32,7 @@ dungeon = generate_dungeon(100,99,50)
 @click.argument("direction", type=click.Choice([d.value for d in Direction]))
 def go(direction):
     if dungeon.move_player(direction):
-        click.echo(f"You move to {dungeon.player.position.room_name}")
+        click.echo(f"You move to 📍 {blue}{dungeon.player.position.room_name}{reset}")
         if trap.found == True:
             click.echo(f"You got cought in {red}Trap{reset}")
             trap.bleed = True
@@ -42,14 +42,16 @@ def go(direction):
             player.take_damage(10)
 
     if dungeon.player.position.is_exit:
-        click.echo("This is an exit!")
+        click.echo(f"This is an {red}exit!{reset}")
 
 
 @click.command()
 def look():
     for direction in dungeon.rooms[dungeon.player.position].items():
-        click.echo(f"There is a room to the {blue}{direction[0]}{reset}.")
+        click.echo(f"There is a room to the 🧭 {blue}{direction[0]}{reset}.")
     trap_name = random.choice(list(traps.keys()))
+    for treasure in dungeon.player.position.contents.keys():
+        click.echo(f"({treasure}) There is a {yellow}{dungeon.player.position.contents[treasure].name}{reset} here.")
     if random.random() < 0.2:
         trap.found = True
         click.echo(f'Watch out for that {red}{trap_name}{reset} trap')
@@ -61,7 +63,7 @@ def look():
 @click.command
 def disarm():
     trap.found = False
-    click.echo(f'Successfully disarmed trap')
+    click.echo(f'{blue}Successfully disarmed{reset} {red}trap{reset}')
     look()
 
 @click.command
@@ -76,13 +78,6 @@ def bandage():
 
 
 
-    
-    for direction in dungeon.rooms[dungeon.player.position].items():
-        click.echo(f"There is a room to the {direction[0]}.")
-    for treasure in dungeon.player.position.contents.keys():
-        click.echo(f"({treasure}) There is a {dungeon.player.position.contents[treasure].name} here.")
-    if dungeon.player.position.is_exit:
-        click.echo("This is an exit!")
 
 @click.command()
 def exit():
@@ -97,7 +92,7 @@ def inventory():
     # print(dungeon.player.position.contents)
     count = 1
     for item in dungeon.player.inventory.keys():
-        click.echo(f"({item}) {dungeon.player.inventory[item].name}")
+        click.echo(f"({item}) {yellow}{dungeon.player.inventory[item].name}{yellow}")
 
 @click.command()
 @click.argument("treasure_key", type=str)
@@ -108,7 +103,7 @@ def grab(treasure_key):
     else:
         element = dungeon.player.position.contents.pop(treasure_key)
         dungeon.player.inventory[str(treasure_key)] = element
-        click.echo(f"You have picked up the {element.name}.")
+        click.echo(f"You have picked up the {yellow}{element.name}{reset}.")
 
 @click.command()
 @click.argument("treasure_key", type=str)
@@ -135,7 +130,7 @@ def appraise(treasure_key):
         t_desc = dungeon.player.inventory[treasure_key].desc
         t_value = dungeon.player.inventory[treasure_key].value
         t_weight = dungeon.player.inventory[treasure_key].weight
-        click.echo(f"{t_name} is a treasure worth {t_value} gold pieces. It weighs {t_weight} pounds. {t_desc}")
+        click.echo(f"{yellow}{t_name}{reset} is a treasure worth 🤑 {yellow}{t_value}{reset} gold pieces. It weighs ⚖️  {blue}{t_weight}{reset} pounds. {green}{t_desc}{reset}")
 
 
 # @click.command()
@@ -169,7 +164,7 @@ cli.add_command(drop)
 if __name__ == "__main__":
     while True:
         # click.echo(dungeon.player.position.contents)
-        click.echo("You are in the " + dungeon.player.position.room_name)
+        click.echo(f"You are in the 📍 {blue}{dungeon.player.position.room_name}{reset}")
         cmd = click.prompt("What do you want to do?",type=str)
         cmd_parts = cmd.split()
         try:
