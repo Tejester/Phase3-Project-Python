@@ -108,7 +108,7 @@ def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
         direction = random.choice(list(Direction))
         # new_door = create_random_door(direction)
         new_content = []
-        new_content = generate_treasures(100)
+        new_content = generate_treasures(20)
         # new_content.append(new_door)
         if direction.value not in dungeon.rooms[random_room]:
             if random.random() < 0.8:
