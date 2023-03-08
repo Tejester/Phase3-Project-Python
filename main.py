@@ -5,7 +5,7 @@ from direction import Direction
 import click
 from room import InteractionMessages
 
-dungeon = generate_dungeon(100,99,50)
+dungeon = generate_dungeon(5,1,50)
 
 @click.command()
 @click.argument("direction", type=click.Choice([d.value for d in Direction]))
@@ -107,7 +107,7 @@ cli.add_command(appraise)
 cli.add_command(drop)
 if __name__ == "__main__":
     while True:
-        # click.echo(dungeon.player.position.contents)
+        # click.echo(dungeon.rooms)
         click.echo("You are in the " + dungeon.player.position.room_name)
         cmd = click.prompt("What do you want to do?",type=str)
         cmd_parts = cmd.split()

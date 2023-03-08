@@ -3,9 +3,10 @@ from room import Room,InteractionMessages
 import random
 import click
 from direction import Direction
-from entities import Player
+from entities import Player, Chameleos
 from treasure import generate_treasures
 import string
+from queue import Queue
 
 adjectives = ["abandoned","aberrant","abhorrent","abiding","abject","ablaze","able","abnormal","aboard","aboriginal","abortive","abounding","abrasive","abrupt","absent","absorbed","absorbing","abstracted","absurd","abundant","abusive","acceptable","accessible","accidental","accurate","acid","acidic","acoustic","acrid","actually","ad hoc","adamant","adaptable","addicted","adhesive","adjoining","adorable","adventurous","afraid","aggressive","agonizing","agreeable","ahead","ajar","alcoholic","alert","alike","alive","alleged","alluring","aloof","amazing","ambiguous","ambitious","amuck","amused","amusing","ancient","angry","animated","annoyed","annoying","anxious","apathetic","aquatic","aromatic","arrogant","ashamed","aspiring","assorted","astonishing","attractive","auspicious","automatic","available","average","awake","aware","awesome","awful","axiomatic","bad","barbarous","bashful","bawdy","beautiful","befitting","belligerent","beneficial","bent","berserk","best","better","bewildered","big","billowy","bite-sized","bitter","bizarre","black","black-and-white","bloody","blue","blue-eyed","blushing","boiling","boorish","bored","boring","bouncy","boundless","brainy","brash","brave","brawny","breakable","breezy","brief","bright","bright","broad","broken","brown","bumpy","burly","bustling","busy","cagey","calculating","callous","calm","capable","capricious","careful","careless","caring","cautious","ceaseless","certain","changeable","charming","cheap","cheerful","chemical","chief","childlike","chilly","chivalrous","chubby","chunky","clammy","classy","clean","clear","clever","cloistered","cloudy","closed","clumsy","cluttered","coherent","cold","colorful","colossal","combative","comfortable","common","complete","complex","concerned","condemned","confused","conscious","cooing","cool","cooperative","coordinated","courageous","cowardly","crabby","craven","crazy","creepy","crooked","crowded","cruel","cuddly","cultured","cumbersome","curious","curly","curved","curvy","cut","cute","cute","cynical","daffy","daily","damaged","damaging","damp","dangerous","dapper","dark","dashing","dazzling","dead","deadpan","deafening","dear","debonair","decisive","decorous","deep","deeply","defeated","defective","defiant","delicate","delicious","delightful","delirious","demonic","delirious","dependent","depressed","deranged","descriptive","deserted","detailed","determined","devilish","didactic","different","difficult","diligent","direful","dirty","disagreeable","disastrous","discreet","disgusted","disgusting","disillusioned","dispensable","distinct","disturbed","divergent","dizzy","domineering","doubtful","drab","draconian","dramatic","dreary","drunk","dry","dull","dusty","dusty","dynamic","dysfunctional","eager","early","earsplitting","earthy","easy","eatable","economic","educated","efficacious","efficient","eight","elastic","elated","elderly","electric","elegant","elfin","elite","embarrassed","eminent","empty","enchanted","enchanting","encouraging","endurable","energetic","enormous","entertaining","enthusiastic","envious","equable","equal","erect","erratic","ethereal","evanescent","evasive","even","excellent","excited","exciting","exclusive","exotic","expensive","extra-large","extra-small","exuberant","exultant","fabulous","faded","faint","fair","faithful","fallacious","false","familiar","famous","fanatical","fancy","fantastic","far","far-flung","fascinated","fast","fat","faulty"]
 places = ["art gallery","bakery","bank","bar","beach","bookstore","bowling alley","bus station","cafe","campground","casino","cemetery","church","city hall","clothing store","coffee shop","concert hall","convenience store","courthouse","dentist's office","department store","doctor's office","drugstore","embassy","factory","farm","fire station","gas station","golf course","grocery store","gym","hair salon","hospital","hotel","house","jail","library","mall","museum","nightclub","office building","park","parking lot","pharmacy","police station","post office","restaurant","school","shopping mall","spa","stadium","store","subway station","supermarket","theater","university","zoo"]
@@ -16,8 +17,14 @@ class DungeonMap:
     def __init__(self):
         self.rooms = {}
         self._player = None
-        self.dragon_location = None
+        self._chameleos = None
 
+    @property
+    def chameleos(self):
+        return self._chameleos
+    @chameleos.setter
+    def chameleos(self,chameleos:Chameleos):
+        self._chameleos = chameleos
     @property
     def player(self):
         return self._player
@@ -39,6 +46,9 @@ class DungeonMap:
 
     def set_player_location(self, room:Room):
         self._player.position = room
+    
+    def set_chameleos_location(self, room:Room):
+        self._chameleos.position = room
 
     def move_player(self, direction:Direction.value):
         if direction not in self.rooms[self._player.position]:
@@ -46,8 +56,7 @@ class DungeonMap:
             return False
         self._player.position = self.rooms[self.player.position][direction]
         return True
-
-
+    
 def opposite_direction(direction:Direction.value):
     if direction == Direction.NORTH.value:
         return Direction.SOUTH.value
@@ -68,6 +77,28 @@ def opposite_direction(direction:Direction.value):
     else:
         raise ValueError("Invalid direction: {}".format(direction))
     
+# Using BFS to find the shortest path
+def find_distance(rooms:dict,start_room:Room,end_room:Room):
+    visited = set()
+    queue = Queue()
+    queue.put((start_room,0))
+
+    while not queue.empty():
+        room, distance = queue.get()
+        if room == end_room:
+            print("DISTANCE: ",distance)
+            return distance
+        visited.add(room)
+        for direction,new_room in rooms[room].items():
+            # print(direction,new_room)
+            # print("Visited: ",visited)
+            # print("Queue: ",queue.queue)
+            if new_room not in visited:
+                queue.put((new_room,distance+1))
+
+    return -1 # If end is not reachable from start
+
+    
 # def create_random_door(direction:Direction.value):
 #     random.random()
 #     broken_chance = 0.1
@@ -87,7 +118,6 @@ def opposite_direction(direction:Direction.value):
 #     return new_door
 
     
-
     
 def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
     # First room is always room 1
@@ -95,6 +125,7 @@ def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
     second_name = random.choice(places)
     dungeon = DungeonMap()
     dungeon.player = Player(10,{})
+    dungeon.chameleos = Chameleos()
     # first_door = Door(DoorType.BRONZE.value,True,False,False,False)
     first_room = Room(1,first_name.title() + " " + second_name.title(),contents={})
     first_room.is_exit = True
@@ -127,12 +158,20 @@ def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
                     new_room.contents[str(letter_list.pop())] = new_content.pop()
                 dungeon.add_room(new_room)
                 dungeon.add_connection(random_room,new_room,direction.value)
+    # distance = find_distance(dungeon.rooms,dungeon.player.position,random_room)
+    # print(distance)
     exit_lefts = num_exits
     while exit_lefts > 0:
         random_room = random.choice(list(dungeon.rooms.keys()))
         if random_room.is_exit == False:
             random_room.is_exit = True
             exit_lefts -= 1
+
+    # Find a random room with a reasonable distance from the player to place Chameleos
+    candidate_room = random.choice(list(dungeon.rooms.keys()))
+    while find_distance(dungeon.rooms,dungeon.player.position,candidate_room) < 1:
+        candidate_room = random.choice(list(dungeon.rooms.keys()))
+    dungeon.set_chameleos_location(candidate_room)
     
     # while len(new_content) > 0:
     #     random_room = random.choice(list(dungeon.rooms.keys()))
