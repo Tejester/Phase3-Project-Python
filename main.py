@@ -21,7 +21,7 @@ blue = Fore.BLUE
 trap_exists = True
 trap_found = False
 
-player = Player(100)
+player = Player(10)
 traps = Trap.traps
 trap = Trap()
 items = Items()
@@ -39,7 +39,7 @@ def go(direction):
             trap.found = False
         if trap.bleed == True:
             click.echo(f"You are {red}bleeding{reset}")
-            player.take_damage(10)
+            player.take_damage(2)
 
     if dungeon.player.position.is_exit:
         click.echo(f"This is an {red}exit!{reset}")
@@ -55,7 +55,7 @@ def look():
     if random.random() < 0.2:
         trap.found = True
         click.echo(f'Watch out for that {red}{trap_name}{reset} trap')
-    if random.random() < 0.1:
+    if random.random() < 0.2:
         items.cloth += 1
         click.echo(f'you found {green}cloth{reset} which can be used as a {green}bandage{reset}')
 
@@ -91,8 +91,9 @@ def exit():
 def inventory():
     # print(dungeon.player.position.contents)
     count = 1
+    click.echo(f'{green}Inventory:{reset}')
     for item in dungeon.player.inventory.keys():
-        click.echo(f"({item}) {yellow}{dungeon.player.inventory[item].name}{yellow}")
+        click.echo(f"({item}) {yellow}{dungeon.player.inventory[item].name}{reset}")
 
 @click.command()
 @click.argument("treasure_key", type=str)
@@ -103,7 +104,9 @@ def grab(treasure_key):
     else:
         element = dungeon.player.position.contents.pop(treasure_key)
         dungeon.player.inventory[str(treasure_key)] = element
+        player.curr_score += element.value
         click.echo(f"You have picked up the {yellow}{element.name}{reset}.")
+
 
 @click.command()
 @click.argument("treasure_key", type=str)
@@ -114,7 +117,8 @@ def drop(treasure_key):
     else:
         element = dungeon.player.inventory.pop(treasure_key)
         dungeon.player.position.contents[str(treasure_key)] = element
-        click.echo(f"You have dropped the {element.name}.")
+        player.curr_score -= element.value
+        click.echo(f"You have {red}dropped{reset} the {yellow}{element.name}{reset}.")
 
 @click.command()
 @click.argument("treasure_key", type=str)
@@ -165,10 +169,22 @@ if __name__ == "__main__":
     while True:
         # click.echo(dungeon.player.position.contents)
         click.echo(f"You are in the 📍 {blue}{dungeon.player.position.room_name}{reset}")
+        click.echo(f'Your current Score: {yellow}{player.curr_score}{reset}')
+        if player.max_hp > 4:
+            click.echo(f"Player Health Points: {green}{player.max_hp}{reset}")
+        elif player.max_hp >0 and player.max_hp <= 4:
+            click.echo(f"Player Health Points: {red}{player.max_hp}{reset}")
         cmd = click.prompt("What do you want to do?",type=str)
         cmd_parts = cmd.split()
         try:
-            # click.clear()
+            click.clear()
             cli(cmd_parts)
         except SystemExit:
             pass
+        if player.max_hp <= 0:
+            click.clear()
+            click.echo(f'{red}{trap.game_over}{reset}')
+            click.echo(f'{red}Unfortunatly you have bled out!{reset}'.center(500))
+            click.echo(f'{blue}Total Loot Score {yellow}{player.curr_score}{reset}'.center(500))
+            break
+        

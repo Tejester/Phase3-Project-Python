@@ -5,6 +5,7 @@ class Player:
         self.max_hp = max_hp
         self._inventory = inventory
         self._position = position
+        self._score = 0
 
     @property
     def inventory(self):
@@ -18,6 +19,14 @@ class Player:
     
     def heal_damage(self,heal):
         self.max_hp += heal
+    
+    @property
+    def curr_score(self):
+        return self._score
+    
+    @curr_score.setter
+    def curr_score(self, value):
+        self._score = value
 
     @property
     def position(self):
