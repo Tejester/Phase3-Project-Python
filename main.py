@@ -53,6 +53,17 @@ def grab(treasure_key):
 
 @click.command()
 @click.argument("treasure_key", type=str)
+def drop(treasure_key):
+    if treasure_key not in dungeon.player.inventory.keys():
+        click.echo("You don't have that treasure.")
+        return
+    else:
+        element = dungeon.player.inventory.pop(treasure_key)
+        dungeon.player.position.contents[str(treasure_key)] = element
+        click.echo(f"You have dropped the {element.name}.")
+
+@click.command()
+@click.argument("treasure_key", type=str)
 def appraise(treasure_key):
     if treasure_key in dungeon.player.position.contents.keys():
         click.echo("Pick up the treasure before you appraise it.")
@@ -93,6 +104,7 @@ cli.add_command(exit)
 cli.add_command(inventory)
 cli.add_command(grab)
 cli.add_command(appraise)
+cli.add_command(drop)
 if __name__ == "__main__":
     while True:
         # click.echo(dungeon.player.position.contents)
