@@ -113,3 +113,6 @@ for row in stmt:
     print(row.name, row.health, row.damage, row.gold)
 
 
+
+
+
