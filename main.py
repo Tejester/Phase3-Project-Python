@@ -35,16 +35,37 @@ def exit():
 
 @click.command()
 def inventory():
-    print(dungeon.player.position.contents)
+    # print(dungeon.player.position.contents)
     count = 1
     for item in dungeon.player.inventory.keys():
-        click.echo(f"{item}. {dungeon.player.inventory[item].name}")
+        click.echo(f"({item}) {dungeon.player.inventory[item].name}")
 
 @click.command()
-@click.argument("treasure_key", type=click.Choice([key for key in dungeon.player.position.contents.keys()]))
+@click.argument("treasure_key", type=str)
 def grab(treasure_key):
-    element = dungeon.player.position.contents.pop(treasure_key)
-    dungeon.player.inventory[str(treasure_key)] = element
+    if treasure_key not in dungeon.player.position.contents:
+        click.echo("That is not a real treasure.")
+        return
+    else:
+        element = dungeon.player.position.contents.pop(treasure_key)
+        dungeon.player.inventory[str(treasure_key)] = element
+        click.echo(f"You have picked up the {element.name}.")
+
+@click.command()
+@click.argument("treasure_key", type=str)
+def appraise(treasure_key):
+    if treasure_key in dungeon.player.position.contents.keys():
+        click.echo("Pick up the treasure before you appraise it.")
+        return
+    elif treasure_key not in dungeon.player.inventory.keys():
+        click.echo("There is no such treasure.")
+        return
+    else:
+        t_name = dungeon.player.inventory[treasure_key].name
+        t_desc = dungeon.player.inventory[treasure_key].desc
+        t_value = dungeon.player.inventory[treasure_key].value
+        t_weight = dungeon.player.inventory[treasure_key].weight
+        click.echo(f"{t_name} is a treasure worth {t_value} gold pieces. It weighs {t_weight} pounds. {t_desc}")
 
 
 # @click.command()
@@ -71,9 +92,10 @@ cli.add_command(look)
 cli.add_command(exit)
 cli.add_command(inventory)
 cli.add_command(grab)
-
+cli.add_command(appraise)
 if __name__ == "__main__":
     while True:
+        # click.echo(dungeon.player.position.contents)
         click.echo("You are in the " + dungeon.player.position.room_name)
         cmd = click.prompt("What do you want to do?",type=str)
         cmd_parts = cmd.split()

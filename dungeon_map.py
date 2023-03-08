@@ -89,7 +89,7 @@ def opposite_direction(direction:Direction.value):
     
 
     
-def generate_dungeon(num_rooms,num_exits,num_treasures):
+def generate_dungeon(num_rooms,num_exits,max_treasures_per_room):
     # First room is always room 1
     first_name = random.choice(adjectives)
     second_name = random.choice(places)
@@ -112,9 +112,19 @@ def generate_dungeon(num_rooms,num_exits,num_treasures):
         # new_content.append(new_door)
         if direction.value not in dungeon.rooms[random_room]:
             if random.random() < 0.8:
+                letter_count = 0
+                letter_list = list(string.ascii_lowercase) + list(string.ascii_uppercase) + list(range(100))
+                letter_list.reverse()
                 num_created += 1
                 new_room_id = num_created
                 new_room = Room(new_room_id,first_name.title() + " " + second_name.title(),{})
+                # Take a random number of treasures from the list
+                num_treasures = random.randint(0,max_treasures_per_room) 
+                # If the number of treasures is greater than the number of treasures left, take all the treasures
+                if num_treasures > len(new_content):
+                    num_treasures = len(num_treasures)
+                for i in range(num_treasures):
+                    new_room.contents[str(letter_list.pop())] = new_content.pop()
                 dungeon.add_room(new_room)
                 dungeon.add_connection(random_room,new_room,direction.value)
     exit_lefts = num_exits
@@ -123,13 +133,11 @@ def generate_dungeon(num_rooms,num_exits,num_treasures):
         if random_room.is_exit == False:
             random_room.is_exit = True
             exit_lefts -= 1
-    letter_count = 0
-    letter_list = list(string.ascii_lowercase) + list(string.ascii_uppercase) + list(range(100))
-    while len(new_content) > 0:
-        random_room = random.choice(list(dungeon.rooms.keys()))
-        random_room.contents[str(letter_list[letter_count])] = new_content.pop()
-        letter_list.remove(letter_list[letter_count])
-        letter_count += 1
+    
+    # while len(new_content) > 0:
+    #     random_room = random.choice(list(dungeon.rooms.keys()))
+    #     random_room.contents[str(letter_list.pop())] = new_content.pop()
+    #     letter_count += 1
         
 
     return dungeon

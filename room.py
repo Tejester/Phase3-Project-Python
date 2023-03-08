@@ -127,8 +127,16 @@ class Room:
         # self.desc = desc
         self.room_id = room_id
         self._room_name = room_name
-        self.contents = contents
+        self._contents = contents
         self.is_exit = False
+
+
+    @property
+    def contents(self):
+        return self._contents
+    @contents.setter
+    def contents(self,contents:dict):
+        self._contents = contents
 
     # @property
     # def neighbors(self):
