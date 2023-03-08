@@ -78,6 +78,24 @@ for name, data in room_data.items():
     room = Room(name=name)
     rooms.append(room)
 
+adjective_data= {
+    "Abandoned": {},
+    "Dilapidated": {},
+    "Dusty": {},
+    "Eerie": {},
+    "Elegant": {},
+    "Empty": {},
+    "Enchanted": {},
+    "Enormous": {},
+    "Fancy": {},
+    "Frightening": {},
+    "Gloomy": {},
+    "Haunted": {},
+    "Huge": {},
+    "Imposing": {},
+    "Impressive": {},
+}
+
 session.bulk_save_objects(rooms)
 
 session.commit()

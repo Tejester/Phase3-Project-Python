@@ -35,3 +35,8 @@ class Room(Base):
     __tablename__ = 'rooms'
     id = Column(Integer, primary_key=True)
     name = Column(String)
+
+class RoomAdjectives(Base):
+    __tablename__ = 'roomadjectives'
+    id = Column(Integer, primary_key=True)
+    adjective = Column(String)
