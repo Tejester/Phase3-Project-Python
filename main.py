@@ -111,11 +111,11 @@ def chameleos_same_room_action():
 @click.command()
 @click.argument("direction", type=click.Choice([d.value for d in Direction]))
 def go(direction):
-    if dungeon.player.position == dungeon.chameleos.position:
-        if random.random() > 0.4:
-            click.echo(style("You manage to escape the tongue of Chameleos by the skin of your teeth.",fg=MessageColors.PLAYER.value))
-        else:
-            click.echo(style("Chameleos has eaten you.",fg=MessageColors.BAD.value))
+    # if dungeon.player.position == dungeon.chameleos.position:
+    #     if random.random() > 0.4:
+    #         click.echo(style("You manage to escape the tongue of Chameleos by the skin of your teeth.",fg=MessageColors.PLAYER.value))
+    #     else:
+    #         click.echo(style("Chameleos has eaten you.",fg=MessageColors.BAD.value))
     if dungeon.move_player(direction):
         click.echo(style(f"ROOM: {dungeon.player.position.room_name}",fg=MessageColors.LOCATION.value))
         if not dungeon.chameleos.activity_level == ActivityLevels.SLUMBER:

@@ -33,6 +33,7 @@ def end_game(end_condition:EndState,dungeon):
         else:
             display_inventory_treasures(dungeon)
             display_missed_treasures(dungeon)
+            click.echo("Score saved to database!")
     elif end_condition == EndState.DEAD:
         click.clear()
         click.echo(style("You have died.",MessageColors.BAD.value))
