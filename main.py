@@ -9,6 +9,12 @@ from entities import ActivityLevels
 import random
 from end_states import EndState,end_game
 from dungeon_colors import MessageColors
+from sqlalchemy import create_engine, func,select
+from end_states import ScoreTable
+from sqlalchemy.orm import sessionmaker
+
+
+scoretable = ScoreTable()
 
 num_rooms = 20
 num_exits = 1
@@ -17,6 +23,9 @@ max_treasures_per_room = 3
 chameleos_min_distance = 5
 first_room = True
 dungeon = generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room,chameleos_min_distance)
+
+engine = create_engine('sqlite:///scores.db', echo=True)
+
 
 # Funny messages for whenever the player places shrimp in a room
 shrimp_placement_messages = ["Good thing you took that fishing trip to Neo-Miami.","Since when did shrimp come in this size?",
@@ -72,7 +81,7 @@ def chameleos_swallow_instadeath():
         return False
     else:
         click.echo(style("You became his lunch!",fg=MessageColors.BAD.value))
-        dungeon.player.take_damage(100)
+        dungeon.player.hp -= 100
         return True
     
 def chameleos_same_room_action():
@@ -128,6 +137,7 @@ def look():
 @click.command()
 def exit():
     if dungeon.player.position.is_exit:
+        dungeon.player.hp -= 100
         end_game(EndState.WON,dungeon)
     else:
         click.echo(style("There is no exit here!",fg=MessageColors.BAD.value))
@@ -267,6 +277,12 @@ cli.add_command(status)
 cli.add_command(here)
 
 if __name__ == "__main__":
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    max_score = session.query(func.max(ScoreTable.score)).scalar()
+    click.echo("The highest score is: " + str(max_score))
+    session.commit()
+    session.close()
     while dungeon.player.hp > 0:
         if first_room:
             click.echo(style("ROOM: " + dungeon.player.position.room_name,fg=MessageColors.LOCATION.value))

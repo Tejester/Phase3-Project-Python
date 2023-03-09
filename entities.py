@@ -33,17 +33,17 @@ class Player:
 
     def display_health_status(self):
         if self._hp == 5:
-            click.echo("You seem to be in perfect health!")
+            click.echo(style("You seem to be in perfect health!",MessageColors.GOOD.value))
         elif self._hp == 4:
-            click.echo("You have slight scratches on the body.")
+            click.echo(style("You have slight scratches on the body.",MessageColors.BAD.value))
         elif self._hp == 3:
-            click.echo("You have quite a few scratches on the body.")
+            click.echo(style("You have quite a few scratches on the body.",MessageColors.BAD.value))
         elif self._hp == 2:
-            click.echo("You have many scratches and a bruise that seems to have come from a whiplash.")
+            click.echo(style("You have many scratches and a bruise that seems to have come from a whiplash.",MessageColors.BAD.value))
         elif self._hp == 1:
-            click.echo("Uhh... Maybe you should see a doctor or something. Like really soon.")
+            click.echo(style("Uhh... Maybe you should see a doctor or something. Like really soon.",MessageColors.BAD.value))
         else:
-            click.echo(style("You are dead.", MessageColors.BAD))
+            click.echo(style("You are dead.", MessageColors.BAD.value))
 
     @property
     def shrimp_count(self):

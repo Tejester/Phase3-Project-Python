@@ -101,7 +101,7 @@ class DungeonMap:
         else:
             click.echo(style("You hear a rustling in the distance.",MessageColors.CHAMELEOS.value))
             path = find_distance(self.rooms,self._chameleos.position,self._player.position,True)
-            click.echo(path)
+            # click.echo(path)
             if(len(path)) >= 1:
                 self._chameleos.position = path[1]
             elif(len(path) == 1):
