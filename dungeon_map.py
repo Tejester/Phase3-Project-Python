@@ -20,6 +20,14 @@ class DungeonMap:
         self._chameleos = None
         self._noise_scale = 0
 
+    
+    @property
+    def dungeon_treasures(self):
+        return self._dungeon_treasures
+    @dungeon_treasures.setter
+    def dungeon_treasures(self,dungeon_treasures:list):
+        self._dungeon_treasures = dungeon_treasures
+
     @property
     def noise_scale(self):
         return self._noise_scale
@@ -184,6 +192,8 @@ def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_ro
     dungeon.add_room(first_room)
     dungeon.set_player_location(first_room)
     num_created = 1
+    letter_list = list(string.ascii_lowercase) + list(string.ascii_uppercase) + list(range(100))
+    letter_list.reverse()
     while num_created < num_rooms:
         first_name = random.choice(adjectives)
         second_name = random.choice(places)
@@ -192,12 +202,10 @@ def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_ro
         # new_door = create_random_door(direction)
         new_content = []
         new_content = generate_treasures(treasure_generated)
+        dungeon.dungeon_treasures = new_content
         # new_content.append(new_door) 
         if direction.value not in dungeon.rooms[random_room]:
             if random.random() < 0.8:
-                letter_count = 0
-                letter_list = list(string.ascii_lowercase) + list(string.ascii_uppercase) + list(range(100))
-                letter_list.reverse()
                 num_created += 1
                 new_room_id = num_created
                 new_room = Room(new_room_id,first_name.title() + " " + second_name.title(),{})

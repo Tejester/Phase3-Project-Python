@@ -6,6 +6,9 @@ import click
 from room import InteractionMessages
 from entities import ActivityLevels
 import random
+from end_states import EndState,end_game
+
+
 num_rooms = 5
 num_exits = 1
 treasure_generated = 20
@@ -21,6 +24,55 @@ shrimp_placement_messages = ["Good thing you took that fishing trip to Neo-Miami
 def chameleos_steps(steps):
     for i in range(steps):
         dungeon.move_chameleos_towards_player()
+
+def chameleos_attack(activity_level:ActivityLevels):
+    if(activity_level == ActivityLevels.SLUMBER):
+        return
+    elif(activity_level == ActivityLevels.CRANKY):
+        click.echo("Chameleos grumbles at you but does nothing.")
+        if random.random > 0.2:
+            click.echo("Maybe he's a little hungry? You should try to feed him some shrimp.")
+    elif(activity_level == ActivityLevels.DISGRUNTLED):
+        click.echo("Chameleos attempts to scratch you...")
+        if chameleos_hit_attempt(0.3):
+            dungeon.player.hp -= 1
+        if chameleos_swallow_instadeath():
+            end_game(EndState.SWALLOWED)
+    elif(activity_level == ActivityLevels.FURIOUS):
+        click.echo("Chameleos attempts to attack you with its tongue...")
+        if chameleos_hit_attempt(0.5):
+            dungeon.player.hp -= 2
+        if chameleos_swallow_instadeath():
+            end_game(EndState.SWALLOWED)
+    elif(activity_level == ActivityLevels.BLOODTHIRSTY):
+        click.echo("Chameleos attempts to breathe fire in your direction.")
+        if chameleos_hit_attempt(0.7):
+            dungeon.player.hp -= 3
+        if chameleos_swallow_instadeath():
+            end_game(EndState.SWALLOWED)
+    
+
+def chameleos_hit_attempt(hit_chance:float):
+    if random.random() > hit_chance:
+        click.echo("But you manage to dodge Chameleos' attack.")
+        return False
+    else:
+        click.echo("And you get hurt.")
+        return True
+
+
+
+def chameleos_swallow_instadeath():
+    click.echo("Chameleos attempts to swallow you whole...")
+    if random.random() > 0.1:
+        click.echo("But you manage to escape the tongue of Chameleos by the skin of your teeth.")
+        return False
+    else:
+        click.echo("You became his lunch!")
+        return True
+    
+
+
 
 
 
@@ -52,19 +104,23 @@ def look():
     if dungeon.in_same_room():
         if(dungeon.chameleos.activity_level == ActivityLevels.SLUMBER):
             click.echo("You see Chameleos sleeping soundly.")
+            chameleos_attack(dungeon.chameleos.activity_level)
         elif(dungeon.chameleos.activity_level == ActivityLevels.CRANKY):
             click.echo("You see Chameleos glaring at you.")
+            chameleos_attack(dungeon.chameleos.activity_level)
         elif(dungeon.chameleos.activity_level == ActivityLevels.DISGRUNTLED):
             click.echo("You see Chameleos getting ready to attack you.")
+            chameleos_attack(dungeon.chameleos.activity_level)
         elif(dungeon.chameleos.activity_level == ActivityLevels.FURIOUS):
             click.echo("You see Chameleos charging at you.")
+            chameleos_attack(dungeon.chameleos.activity_level)
         elif(dungeon.chameleos.activity_level == ActivityLevels.BLOODTHIRSTY):
-            click.echo("You see Chameleos attacking you.")
+            click.echo("You see Chameleos salivating as though his dinner has been served!")
+            chameleos_attack(dungeon.chameleos.activity_level)
 @click.command()
 def exit():
     if dungeon.player.position.is_exit:
-        click.echo("You have escaped the dungeon!")
-        exit()
+        end_game(EndState.WON,dungeon)
     else:
         click.echo("There is no exit here!")
 
@@ -84,6 +140,7 @@ def grab(treasure_key):
     else:
         element = dungeon.player.position.contents.pop(treasure_key)
         dungeon.player.inventory[str(treasure_key)] = element
+        dungeon.noise_scale += 1
         click.echo(f"You have picked up the {element.name}.")
 
 @click.command()

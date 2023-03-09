@@ -1,5 +1,7 @@
 from room import Room
 from enum import Enum
+import click
+from end_states import EndState,end_game
 
 class ActivityLevels(Enum):
     SLUMBER = 1
@@ -10,10 +12,36 @@ class ActivityLevels(Enum):
 
 class Player:
     def __init__(self,max_hp:int,inventory:dict = {},position:Room = None):
-        self.max_hp = max_hp
+        self._max_hp = max_hp
+        self._hp = max_hp
         self._inventory = inventory
         self._position = position
         self._shrimp_count = 80
+    
+    @property
+    def max_hp(self):
+        return self._max_hp
+    @property
+    def hp(self):
+        return self._hp
+    
+    @hp.setter
+    def hp(self,value):
+        self.hp = value
+
+    def display_health_status(self):
+        if self.hp is 5:
+            click.echo("You seem to be in perfect health!")
+        elif self.hp is 4:
+            click.echo("You have slight scratches on the body.")
+        elif self.hp is 3:
+            click.echo("You have quite a few scratches on the body.")
+        elif self.hp is 2:
+            click.echo("You have many scratches and a bruise that seems to have come from a whiplash.")
+        elif self.hp is 1:
+            click.echo("Uhh... Maybe you should see a doctor or something. Like really soon.")
+        else:
+            click.echo("You are dead.")
 
     @property
     def shrimp_count(self):
@@ -34,10 +62,12 @@ class Player:
         self._inventory = inventory
 
     def take_damage(self,damage):
-        self.max_hp -= damage
+        self.hp -= damage
+        if self.hp <= 0:
+            end_game(EndState.DEAD)
     
     def heal_damage(self,heal):
-        self.max_hp += heal
+        self.hp += heal
 
     @property
     def position(self):
