@@ -14,6 +14,7 @@ num_exits = 1
 treasure_generated = 20
 max_treasures_per_room = 3
 chameleos_min_distance = 5
+first_room = True
 dungeon = generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room,chameleos_min_distance)
 
 # Funny messages for whenever the player places shrimp in a room
@@ -260,9 +261,11 @@ cli.add_command(shrimpify)
 cli.add_command(status)
 
 if __name__ == "__main__":
-    while True:
+    while dungeon.player.hp > 0:
+        if first_room:
+            click.echo("ROOM: " + dungeon.player.position.room_name)
+            first_room = False
         # click.echo(dungeon.rooms)
-        click.echo("You are in the " + dungeon.player.position.room_name)
         cmd = click.prompt("What do you want to do?",type=str)
         cmd_parts = cmd.split()
         try:

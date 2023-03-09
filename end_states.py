@@ -19,10 +19,13 @@ def end_game(end_condition:EndState,dungeon):
             display_inventory_treasures(dungeon)
             display_missed_treasures(dungeon)
     elif end_condition == EndState.DEAD:
+        click.clear()
         click.echo("You have died.")
     elif end_condition == EndState.SWALLOWED:
+        click.clear()
         click.echo("You have been swallowed by Chameleos.")
-    exit(None)
+    # Exit the game
+    raise click.exceptions.Exit(0)
 def display_missed_treasures(dungeon):
     n = 0
     listing_count = 1
