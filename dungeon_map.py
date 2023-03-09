@@ -100,8 +100,10 @@ class DungeonMap:
             click.echo(path)
             if(len(path)) >= 1:
                 self._chameleos.position = path[1]
-            else:
+            elif(len(path) == 1):
                 self._chameleos.position = path[0]
+            else:
+                return
             print("Player Location: ",self._player.position)
             print("Chameleos Location: ",self._chameleos.position)
             return True
@@ -155,8 +157,10 @@ def find_distance(rooms:dict,start_room:Room,end_room:Room,return_visited:bool=F
             # print("Queue: ",queue.queue)
             if new_room not in visited:
                 queue.put((new_room,distance+1))
-
-    return -1 # If end is not reachable from start
+    if return_visited == False:
+        return -1 # If end is not reachable from start
+    else:
+        return visited
 
     
 # def create_random_door(direction:Direction.value):
@@ -179,12 +183,12 @@ def find_distance(rooms:dict,start_room:Room,end_room:Room,return_visited:bool=F
 
     
     
-def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room):
+def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room,chameleos_min_distance:int):
     # First room is always room 1
     first_name = random.choice(adjectives)
     second_name = random.choice(places)
     dungeon = DungeonMap()
-    dungeon.player = Player(10,{})
+    dungeon.player = Player(5,{})
     dungeon.chameleos = Chameleos()
     # first_door = Door(DoorType.BRONZE.value,True,False,False,False)
     first_room = Room(1,first_name.title() + " " + second_name.title(),contents={})
@@ -229,7 +233,7 @@ def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_ro
 
     # Find a random room with a reasonable distance from the player to place Chameleos
     candidate_room = random.choice(list(dungeon.rooms.keys()))
-    while find_distance(dungeon.rooms,dungeon.player.position,candidate_room) < 1:
+    while find_distance(dungeon.rooms,dungeon.player.position,candidate_room) < chameleos_min_distance:
         candidate_room = random.choice(list(dungeon.rooms.keys()))
     else:
         dungeon.set_chameleos_location(candidate_room)

@@ -9,11 +9,12 @@ import random
 from end_states import EndState,end_game
 
 
-num_rooms = 5
+num_rooms = 20
 num_exits = 1
 treasure_generated = 20
 max_treasures_per_room = 3
-dungeon = generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room)
+chameleos_min_distance = 5
+dungeon = generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room,chameleos_min_distance)
 
 # Funny messages for whenever the player places shrimp in a room
 shrimp_placement_messages = ["Good thing you took that fishing trip to Neo-Miami.","Since when did shrimp come in this size?",
@@ -30,26 +31,26 @@ def chameleos_attack(activity_level:ActivityLevels):
         return
     elif(activity_level == ActivityLevels.CRANKY):
         click.echo("Chameleos grumbles at you but does nothing.")
-        if random.random > 0.2:
+        if random.random() > 0.2:
             click.echo("Maybe he's a little hungry? You should try to feed him some shrimp.")
     elif(activity_level == ActivityLevels.DISGRUNTLED):
         click.echo("Chameleos attempts to scratch you...")
         if chameleos_hit_attempt(0.3):
-            dungeon.player.hp -= 1
+            dungeon.player.take_damage(1,dungeon)
         if chameleos_swallow_instadeath():
-            end_game(EndState.SWALLOWED)
+            end_game(EndState.SWALLOWED,dungeon)
     elif(activity_level == ActivityLevels.FURIOUS):
         click.echo("Chameleos attempts to attack you with its tongue...")
         if chameleos_hit_attempt(0.5):
-            dungeon.player.hp -= 2
+            dungeon.player.take_damage(2,dungeon)
         if chameleos_swallow_instadeath():
-            end_game(EndState.SWALLOWED)
+            end_game(EndState.SWALLOWED,dungeon)
     elif(activity_level == ActivityLevels.BLOODTHIRSTY):
         click.echo("Chameleos attempts to breathe fire in your direction.")
         if chameleos_hit_attempt(0.7):
-            dungeon.player.hp -= 3
+            dungeon.player.take_damage(3,dungeon)
         if chameleos_swallow_instadeath():
-            end_game(EndState.SWALLOWED)
+            end_game(EndState.SWALLOWED,dungeon)
     
 
 def chameleos_hit_attempt(hit_chance:float):
@@ -71,7 +72,26 @@ def chameleos_swallow_instadeath():
         click.echo("You became his lunch!")
         return True
     
-
+def chameleos_same_room_action():
+    if dungeon.in_same_room():
+        if(dungeon.chameleos.activity_level == ActivityLevels.SLUMBER):
+            click.echo("You see Chameleos sleeping soundly.")
+            chameleos_attack(dungeon.chameleos.activity_level)
+        elif(dungeon.chameleos.activity_level == ActivityLevels.CRANKY):
+            click.echo("You see Chameleos glaring at you.")
+            chameleos_attack(dungeon.chameleos.activity_level)
+        elif(dungeon.chameleos.activity_level == ActivityLevels.DISGRUNTLED):
+            click.echo("You see Chameleos getting ready to attack you.")
+            chameleos_attack(dungeon.chameleos.activity_level)
+        elif(dungeon.chameleos.activity_level == ActivityLevels.FURIOUS):
+            click.echo("You see Chameleos charging at you.")
+            chameleos_attack(dungeon.chameleos.activity_level)
+        elif(dungeon.chameleos.activity_level == ActivityLevels.BLOODTHIRSTY):
+            click.echo("You see Chameleos salivating as though his dinner has been served!")
+            chameleos_attack(dungeon.chameleos.activity_level)
+        return True
+    else:
+        return False
 
 
 
@@ -91,6 +111,7 @@ def go(direction):
             chameleos_steps(dungeon.chameleos.activity_level.value)
     if dungeon.player.position.is_exit:
         click.echo("This is an exit!")
+    chameleos_same_room_action()
 
 
 @click.command()
@@ -101,22 +122,7 @@ def look():
         click.echo(f"({treasure}) There is a {dungeon.player.position.contents[treasure].name} here.")
     if dungeon.player.position.is_exit:
         click.echo("This is an exit!")
-    if dungeon.in_same_room():
-        if(dungeon.chameleos.activity_level == ActivityLevels.SLUMBER):
-            click.echo("You see Chameleos sleeping soundly.")
-            chameleos_attack(dungeon.chameleos.activity_level)
-        elif(dungeon.chameleos.activity_level == ActivityLevels.CRANKY):
-            click.echo("You see Chameleos glaring at you.")
-            chameleos_attack(dungeon.chameleos.activity_level)
-        elif(dungeon.chameleos.activity_level == ActivityLevels.DISGRUNTLED):
-            click.echo("You see Chameleos getting ready to attack you.")
-            chameleos_attack(dungeon.chameleos.activity_level)
-        elif(dungeon.chameleos.activity_level == ActivityLevels.FURIOUS):
-            click.echo("You see Chameleos charging at you.")
-            chameleos_attack(dungeon.chameleos.activity_level)
-        elif(dungeon.chameleos.activity_level == ActivityLevels.BLOODTHIRSTY):
-            click.echo("You see Chameleos salivating as though his dinner has been served!")
-            chameleos_attack(dungeon.chameleos.activity_level)
+    
 @click.command()
 def exit():
     if dungeon.player.position.is_exit:
@@ -189,12 +195,17 @@ def listen():
 @click.command()
 def scream():
     dungeon.scream()
+    if not dungeon.chameleos.activity_level == ActivityLevels.SLUMBER:
+        chameleos_steps(dungeon.chameleos.activity_level.value)
+    chameleos_same_room_action()
 
 @click.command()
 def wait():
     if not dungeon.chameleos.activity_level == ActivityLevels.SLUMBER:
         click.echo("You wait for a brief moment.")
         chameleos_steps(dungeon.chameleos.activity_level.value)
+    chameleos_same_room_action()
+
 
 @click.command()
 def shrimpify():
@@ -208,6 +219,11 @@ def shrimpify():
         random_message_index = random.randint(0,len(shrimp_placement_messages))
         click.echo(shrimp_placement_messages[random_message_index])
         dungeon.player.shrimpify(dungeon.player.position)
+    chameleos_same_room_action()
+
+@click.command()
+def status():
+    dungeon.player.display_health_status()
     
 
 
@@ -241,6 +257,7 @@ cli.add_command(listen)
 cli.add_command(scream)
 cli.add_command(wait)
 cli.add_command(shrimpify)
+cli.add_command(status)
 
 if __name__ == "__main__":
     while True:

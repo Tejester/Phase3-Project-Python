@@ -27,18 +27,18 @@ class Player:
     
     @hp.setter
     def hp(self,value):
-        self.hp = value
+        self._hp = value
 
     def display_health_status(self):
-        if self.hp is 5:
+        if self._hp == 5:
             click.echo("You seem to be in perfect health!")
-        elif self.hp is 4:
+        elif self._hp == 4:
             click.echo("You have slight scratches on the body.")
-        elif self.hp is 3:
+        elif self._hp == 3:
             click.echo("You have quite a few scratches on the body.")
-        elif self.hp is 2:
+        elif self._hp == 2:
             click.echo("You have many scratches and a bruise that seems to have come from a whiplash.")
-        elif self.hp is 1:
+        elif self._hp == 1:
             click.echo("Uhh... Maybe you should see a doctor or something. Like really soon.")
         else:
             click.echo("You are dead.")
@@ -61,13 +61,13 @@ class Player:
     def inventory(self,inventory):
         self._inventory = inventory
 
-    def take_damage(self,damage):
-        self.hp -= damage
-        if self.hp <= 0:
-            end_game(EndState.DEAD)
+    def take_damage(self,damage,dungeon):
+        self._hp -= damage
+        if self._hp <= 0:
+            end_game(EndState.DEAD,dungeon)
     
     def heal_damage(self,heal):
-        self.hp += heal
+        self._hp += heal
 
     @property
     def position(self):
