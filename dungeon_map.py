@@ -2,11 +2,15 @@ from __future__ import annotations
 from room import Room,InteractionMessages
 import random
 import click
+from click import style
 from direction import Direction
 from entities import Player, Chameleos, ActivityLevels
 from treasure import generate_treasures
 import string
 from queue import Queue
+from dungeon_colors import MessageColors
+import tracery
+from tracery.modifiers import base_english
 
 adjectives = ["abandoned","aberrant","abhorrent","abiding","abject","ablaze","able","abnormal","aboard","aboriginal","abortive","abounding","abrasive","abrupt","absent","absorbed","absorbing","abstracted","absurd","abundant","abusive","acceptable","accessible","accidental","accurate","acid","acidic","acoustic","acrid","actually","ad hoc","adamant","adaptable","addicted","adhesive","adjoining","adorable","adventurous","afraid","aggressive","agonizing","agreeable","ahead","ajar","alcoholic","alert","alike","alive","alleged","alluring","aloof","amazing","ambiguous","ambitious","amuck","amused","amusing","ancient","angry","animated","annoyed","annoying","anxious","apathetic","aquatic","aromatic","arrogant","ashamed","aspiring","assorted","astonishing","attractive","auspicious","automatic","available","average","awake","aware","awesome","awful","axiomatic","bad","barbarous","bashful","bawdy","beautiful","befitting","belligerent","beneficial","bent","berserk","best","better","bewildered","big","billowy","bite-sized","bitter","bizarre","black","black-and-white","bloody","blue","blue-eyed","blushing","boiling","boorish","bored","boring","bouncy","boundless","brainy","brash","brave","brawny","breakable","breezy","brief","bright","bright","broad","broken","brown","bumpy","burly","bustling","busy","cagey","calculating","callous","calm","capable","capricious","careful","careless","caring","cautious","ceaseless","certain","changeable","charming","cheap","cheerful","chemical","chief","childlike","chilly","chivalrous","chubby","chunky","clammy","classy","clean","clear","clever","cloistered","cloudy","closed","clumsy","cluttered","coherent","cold","colorful","colossal","combative","comfortable","common","complete","complex","concerned","condemned","confused","conscious","cooing","cool","cooperative","coordinated","courageous","cowardly","crabby","craven","crazy","creepy","crooked","crowded","cruel","cuddly","cultured","cumbersome","curious","curly","curved","curvy","cut","cute","cute","cynical","daffy","daily","damaged","damaging","damp","dangerous","dapper","dark","dashing","dazzling","dead","deadpan","deafening","dear","debonair","decisive","decorous","deep","deeply","defeated","defective","defiant","delicate","delicious","delightful","delirious","demonic","delirious","dependent","depressed","deranged","descriptive","deserted","detailed","determined","devilish","didactic","different","difficult","diligent","direful","dirty","disagreeable","disastrous","discreet","disgusted","disgusting","disillusioned","dispensable","distinct","disturbed","divergent","dizzy","domineering","doubtful","drab","draconian","dramatic","dreary","drunk","dry","dull","dusty","dusty","dynamic","dysfunctional","eager","early","earsplitting","earthy","easy","eatable","economic","educated","efficacious","efficient","eight","elastic","elated","elderly","electric","elegant","elfin","elite","embarrassed","eminent","empty","enchanted","enchanting","encouraging","endurable","energetic","enormous","entertaining","enthusiastic","envious","equable","equal","erect","erratic","ethereal","evanescent","evasive","even","excellent","excited","exciting","exclusive","exotic","expensive","extra-large","extra-small","exuberant","exultant","fabulous","faded","faint","fair","faithful","fallacious","false","familiar","famous","fanatical","fancy","fantastic","far","far-flung","fascinated","fast","fat","faulty"]
 places = ["art gallery","bakery","bank","bar","beach","bookstore","bowling alley","bus station","cafe","campground","casino","cemetery","church","city hall","clothing store","coffee shop","concert hall","convenience store","courthouse","dentist's office","department store","doctor's office","drugstore","embassy","factory","farm","fire station","gas station","golf course","grocery store","gym","hair salon","hospital","hotel","house","jail","library","mall","museum","nightclub","office building","park","parking lot","pharmacy","police station","post office","restaurant","school","shopping mall","spa","stadium","store","subway station","supermarket","theater","university","zoo"]
@@ -81,7 +85,7 @@ class DungeonMap:
             click.echo(InteractionMessages.MOVE_BUT_DIRECTION_NOT_EXIST.value)
             return False
         self._player.position = self.rooms[self.player.position][direction]
-        click.echo("You move through the corrodor making as little noise as possible.")
+        click.echo(style("You move through the corridor making as little noise as possible.",MessageColors.PLAYER.value))
         self._noise_scale += 1
         self.chameleos.update_activity_level(self._noise_scale)
         return True
@@ -91,11 +95,11 @@ class DungeonMap:
             return
         elif self.chameleos.position.shrimpified:
             self.chameleos.eat_shrimp(self.chameleos.position)
-            click.echo("You hear an eating sound.")
+            click.echo(style("You hear an eating sound.",MessageColors.CHAMELEOS.value))
             self._noise_scale = 0
             self.chameleos.update_activity_level(self._noise_scale)
         else:
-            click.echo("You hear a rustling in the distance.")
+            click.echo(style("You hear a rustling in the distance.",MessageColors.CHAMELEOS.value))
             path = find_distance(self.rooms,self._chameleos.position,self._player.position,True)
             click.echo(path)
             if(len(path)) >= 1:
@@ -104,12 +108,10 @@ class DungeonMap:
                 self._chameleos.position = path[0]
             else:
                 return
-            print("Player Location: ",self._player.position)
-            print("Chameleos Location: ",self._chameleos.position)
             return True
 
     def scream(self):
-        click.echo("You scream as loud as you can!")
+        click.echo(style("You scream as loud as you can!",MessageColors.PLAYER.value))
         self._noise_scale += 10
         self.chameleos.update_activity_level(self._noise_scale)
         return True
@@ -144,7 +146,6 @@ def find_distance(rooms:dict,start_room:Room,end_room:Room,return_visited:bool=F
         room, distance = queue.get()
         if room == end_room:
             visited.append(end_room)
-            print("DISTANCE: ",distance)
             if(return_visited == False):
                 return distance
             else:
@@ -184,6 +185,62 @@ def find_distance(rooms:dict,start_room:Room,end_room:Room,return_visited:bool=F
     
     
 def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_room,chameleos_min_distance:int):
+    # # Random sentence engine for room descriptions
+    # grammar = tracery.Grammar({
+    #     # subject for room description. It's a room, so it's always "the room"
+    #     "subject": ["the room"],
+    #     # adjectives for room description
+    #     "adjective": ["funny","smelly","cool","dark","bright","shiny","dusty","dirty","mysterious","magical","enchanted","rancid","bloodthirsty",
+    #                   "ugly","shabby","beautful","fancy","frightening","scary","creepy","spooky","haunted","spooky","spooky","spooky","spooky"],
+    #     # verbs for room description
+    #     "verb" : ["scream","sing","laugh","cry","echo","whisper","moan","howl","yell","squeal","squeak","drip","splash"],
+    #     # verbs conjugated to present tense
+    #     "verb.present" : ["screams","sings","laughs","cries","echoes","whispers","moans","howls","yells","squeals","squeaks","drips","splashes"],
+    #     # verbs conjugated to past tense
+    #     "verb.past" : ["screamed","sang","laughed","cried","echoed","whispered","moaned","howled","yelled","squealed","squeaked","dripped","splashed"],
+
+    #     # nouns for room description
+    #     "noun" : ["quietus","silence","noise","sound","flashing lights","darkness","light","shadows","ghosts","spirits","rocks","stones","dirt","dust","cobwebs","mud","water","blood"],
+    #     # adverbs for room description
+    #     "adverb" : ["loudly","softly","quietly","eerie","ominously","creepily","frighteningly","scarily","creepily","creepily","amazingly","magically","darkly","gradually","carelessly"],
+    #     # prepositions for room description
+    #     "preposition" : ["in","on","under","behind","beside","near","above","below","around","through","across","over","underneath","inside",
+    #                      "outside","beneath","beyond","throughout","among","amongst","amid","amidst","within","without","alongside","along","opposite","towards",
+    #                      "toward","from","of","by","with","at","into","onto","through","till","until","since","for","in","on","upon","after",
+    #                      "before","since","until","till","during","while","whilst","except","excepting","excluding","including","barring","despite",
+    #                      "minus","notwithstanding","out","outside","over","past","per","plus","pro","regarding",
+    #                      "round","save","sub","than","throughout","to","toward","towards","under","underneath","unlike","until","unto","up","upon","versus",
+    #                      "via","with","within","without"],
+    #     # conjunctions for room description
+    #     "conjunction" : ["and","or","but","nor","for","yet","so"],
+    #     # articles for room description
+    #     "article" : ["a","the","an"],
+    #     # colors for room description
+    #     "color" : ["red","orange","yellow","green","blue","indigo","violet","purple","black","white","grey","gray","brown","pink","magenta","cyan","teal","maroon","olive","lime","navy","aqua"],
+    #     # smells for room description
+    #     "smell" : ["rotten","stale","foul","putrid","decaying","decaying","funny","stinky","amazing","otherworldly","magical","enchanted","rancid","bloodthirsty"],
+    #     # actions for room description
+    #     "action": ["seems to be alive","has something lurking inside","has been abandoned for years","clearly hasn't gotten a through cleaning in a while",
+    #                "dust covers everything","is covered in cobwebs","is covered in dust","is covered in dirt","is covered in grime","is covered in filth",
+    #                "is covered in mud","is covered in slime","is covered in blood","is covered in guts","is covered in gore","is covered in vomit","is covered in feces",
+    #                "is covered in urine","is covered in snot","is covered in mucus","is covered in pus","is covered in oil","is covered in grease","is covered in tar","is covered in wax",
+    #                "is covered in paint","is covered in ink","is covered in mud","is covered in sand","is covered in ash","is covered in soot","is covered in rust",
+    #                "is covered in mold","is covered in mildew","is covered in fungus","is covered in moss","is covered in lichen","is covered in algae","is covered in slime",
+    #                "is covered in ooze","is covered in pus","is covered in blood","is covered in guts","is covered in gore","is covered in vomit","is covered in feces",
+    #                "is covered in urine","is covered in snot","is covered in mucus","is covered in pus","is covered in oil","is covered in grease","is covered in tar",
+    #                "is covered in wax","is covered in paint","is covered in ink","is covered in mud","is covered in sand","is covered in ash","is covered in soot","is covered in rust",
+    #                "is covered in mold","is covered in mildew","is covered in fungus","is covered in moss","is covered in lichen","is covered in algae","is covered in slime","is covered in ooze",
+    #                "is covered in pus","is covered in blood","is covered in guts","is covered in gore","is covered in vomit","is covered in feces","is covered in urine",
+    #                "is covered in snot","is covered in mucus","is covered in pus","is covered in oil","is covered in grease","is covered in tar","is covered in wax",
+    #                "is covered in paint","is covered in ink","is covered in mud","is covered in sand","is covered in ash","is covered in soot","is covered in rust",
+    #                "is covered in mold","is covered in mildew","is covered in fungus","is covered in moss","is covered in lichen","is covered in algae","is covered in slime",
+    #                "is covered in ooze","is covered in pus"],
+    #     # Random origins for room description:
+    #     "origin": ["#subject.capitalize# #verb.past# #preposition# #article# #adjective# #noun#."]
+    # })
+
+    # grammar.add_modifiers(base_english)
+    # sentence = grammar.flatten("#origin#")
     # First room is always room 1
     first_name = random.choice(adjectives)
     second_name = random.choice(places)
@@ -210,6 +267,7 @@ def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_ro
         # new_content.append(new_door) 
         if direction.value not in dungeon.rooms[random_room]:
             if random.random() < 0.8:
+                # sentence = grammar.flatten("#origin#")
                 num_created += 1
                 new_room_id = num_created
                 new_room = Room(new_room_id,first_name.title() + " " + second_name.title(),{})
@@ -237,149 +295,5 @@ def generate_dungeon(num_rooms,num_exits,treasure_generated,max_treasures_per_ro
         candidate_room = random.choice(list(dungeon.rooms.keys()))
     else:
         dungeon.set_chameleos_location(candidate_room)
-    
-    # while len(new_content) > 0:
-    #     random_room = random.choice(list(dungeon.rooms.keys()))
-    #     random_room.contents[str(letter_list.pop())] = new_content.pop()
-    #     letter_count += 1
-        
-
     return dungeon
-
-# class DungeonMap:
-#     def __init__(self):
-#         self.rooms = {}
-#         self.player_location = None
-
-#     def add_room(self, room_id):
-#         if room_id not in self.rooms:
-#             self.rooms[room_id] = {}
-
-#     def add_connection(self, room1_id, room2_id, direction:Direction):
-#         if room1_id not in self.rooms:
-#             self.add_room(room1_id)
-#         if room2_id not in self.rooms:
-#             self.add_room(room2_id)
-#         self.rooms[room1_id][direction] = room2_id
-#         self.rooms[room2_id][opposite_direction(direction)] = room1_id
-
-#     def set_player_location(self, room_id):
-#         self.player_location = room_id
-
-#     def move_player(self, direction:Direction):
-#         if direction not in self.rooms[self.player_location]:
-#             click.echo("You can't go that way!")
-#             return False
-#         self.player_location = self.rooms[self.player_location][direction]
-#         return True
-
-
-# def opposite_direction(direction:Direction):
-#     if direction == Direction.NORTH:
-#         return Direction.SOUTH
-#     elif direction == Direction.NORTHEAST:
-#         return Direction.SOUTHWEST
-#     elif direction == Direction.EAST:
-#         return Direction.WEST
-#     elif direction == Direction.SOUTHEAST:
-#         return Direction.NORTHWEST
-#     elif direction == Direction.SOUTH:
-#         return Direction.NORTH
-#     elif direction == Direction.SOUTHWEST:
-#         return Direction.NORTHEAST
-#     elif direction == Direction.WEST:
-#         return Direction.EAST
-#     elif direction == Direction.NORTHWEST:
-#         return Direction.SOUTHEAST
-#     else:
-#         raise ValueError("Invalid direction: {}".format(direction))
-    
-# def generate_dungeon(num_rooms):
-#     dungeon = DungeonMap()
-#     dungeon.add_room(1,Room())
-#     dungeon.set_player_location(1)
-#     num_created = 1
-#     while num_created < num_rooms:
-#         room_id = random.randint(1,num_created)
-#         direction = random.choice(list(Direction))
-#         if direction not in dungeon.rooms[room_id]:
-#             if random.random() < 0.8:
-#                 num_created += 1
-#                 new_room_id = num_created
-#                 dungeon.add_room(new_room_id,Room())
-#                 dungeon.add_connection(room_id,new_room_id,direction)
-#     return dungeon
-
-# # This class exists to represent the dungeon map as a graph
-# class DungeonMap:
-#     def __init__(self,min_rooms:int,max_rooms:int):
-#         self.graph = {}
-#         self.rooms = []
-#         self.min_rooms = min_rooms
-#         self.max_rooms = max_rooms
-#         self.current_room = None # This is the current room
-#         self.connected_room_count = 0 # This is the number of rooms in the dungeon
-
-#     @property
-#     def room_count(self):
-#         return self.room_count
-#     @property
-#     def current_room(self):
-#         print(self.current_room)
-#         return self.current_room
-    
-#     @current_room.setter
-#     def current_room(self,value):
-#         self.current_room = value
-    
-#     def get_dungeon_graph(self):
-#         return self.graph
-    
-#     def generate_rooms(self):
-#         number_of_rooms = Random.randint(self.min_rooms,self.max_rooms)
-#         # Create rooms of random types and add them to the room list
-#         for i in range(number_of_rooms):
-#             self.rooms.append(Room("brick-walled room"),[])
-
-#     # Check if current room already has a direction
-#     def has_direction(self,direction:Direction) -> bool:
-#         if direction in self.current_room:
-#             return True
-#         else:
-#             return False
-        
-
-    
-#     @property
-#     def connected_room_count(self):
-#         return self.room_count
-    
-#     @room_count.setter
-#     def connected_room_count(self,value):
-#         self.room_count = value
-
-#     # For ordinary hallways
-#     def add_undirected_edge(self,u:Room,v:Room,direction:Direction):
-#         if u not in self.graph:
-#             self.graph[u] = []
-#         if v not in self.graph:
-#             self.graph[v] = []
-#         self.graph[u].append({direction:v})
-#         self.graph[v].append({direction:u})
-#         if self.room_count == 0:
-#             self.current_room = self.graph[u]
-#         self.room_count += 1
-    
-#     def get_connections(self,rooms:dict):
-#         # This function will return a dict of rooms that are connected to the current room
-#         return self.graph[self.current_room]
-    
-#     # Move in a valid direction
-#     def travel(self,direction:Direction):
-#         if direction in self.graph[self.current_room]:
-#             self.current_room = self.graph[self.current_room]
-#         else:
-#             print("You can't go that way!")
-#             return False
-#         return True
 

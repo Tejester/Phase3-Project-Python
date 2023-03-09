@@ -124,13 +124,19 @@ class InteractionMessages(Enum):
 class Room:
     def __init__(self,room_id,room_name,contents:dict={}):
         # self.surr = surr
-        # self.desc = desc
+        # self._desc = desc
         self.room_id = room_id
         self._room_name = room_name
         self._contents = contents
         self.is_exit = False
         self._shrimpified = False
 
+    # @property
+    # def desc(self):
+    #     return self._desc
+    # @desc.setter
+    # def desc(self,desc):
+    #     self._desc = desc
     
     @property
     def shrimpified(self):

@@ -3,11 +3,12 @@ from dungeon_map import DungeonMap,generate_dungeon
 # from room import Door
 from direction import Direction
 import click
+from click import style
 from room import InteractionMessages
 from entities import ActivityLevels
 import random
 from end_states import EndState,end_game
-
+from dungeon_colors import MessageColors
 
 num_rooms = 20
 num_exits = 1
@@ -31,23 +32,23 @@ def chameleos_attack(activity_level:ActivityLevels):
     if(activity_level == ActivityLevels.SLUMBER):
         return
     elif(activity_level == ActivityLevels.CRANKY):
-        click.echo("Chameleos grumbles at you but does nothing.")
+        click.echo(style("Chameleos grumbles at you but does nothing.",fg=MessageColors.CHAMELEOS.value))
         if random.random() > 0.2:
-            click.echo("Maybe he's a little hungry? You should try to feed him some shrimp.")
+            click.echo(style("Maybe he's a little hungry? You should try to feed him some shrimp.",fg=MessageColors.SHRIMP.value))
     elif(activity_level == ActivityLevels.DISGRUNTLED):
-        click.echo("Chameleos attempts to scratch you...")
+        click.echo(style("Chameleos attempts to scratch you...",MessageColors.CHAMELEOS.value))
         if chameleos_hit_attempt(0.3):
             dungeon.player.take_damage(1,dungeon)
         if chameleos_swallow_instadeath():
             end_game(EndState.SWALLOWED,dungeon)
     elif(activity_level == ActivityLevels.FURIOUS):
-        click.echo("Chameleos attempts to attack you with its tongue...")
+        click.echo(style("Chameleos attempts to attack you with its tongue...",MessageColors.CHAMELEOS.value))
         if chameleos_hit_attempt(0.5):
             dungeon.player.take_damage(2,dungeon)
         if chameleos_swallow_instadeath():
             end_game(EndState.SWALLOWED,dungeon)
     elif(activity_level == ActivityLevels.BLOODTHIRSTY):
-        click.echo("Chameleos attempts to breathe fire in your direction.")
+        click.echo(style("Chameleos attempts to breathe fire in your direction.",fg=MessageColors.CHAMELEOS.value))
         if chameleos_hit_attempt(0.7):
             dungeon.player.take_damage(3,dungeon)
         if chameleos_swallow_instadeath():
@@ -56,39 +57,40 @@ def chameleos_attack(activity_level:ActivityLevels):
 
 def chameleos_hit_attempt(hit_chance:float):
     if random.random() > hit_chance:
-        click.echo("But you manage to dodge Chameleos' attack.")
+        click.echo(style("But you manage to dodge Chameleos' attack.",fg=MessageColors.PLAYER.value))
         return False
     else:
-        click.echo("And you get hurt.")
+        click.echo(style("And you get hurt.",fg=MessageColors.BAD.value))
         return True
 
 
 
 def chameleos_swallow_instadeath():
-    click.echo("Chameleos attempts to swallow you whole...")
+    click.echo(style("Chameleos attempts to swallow you whole...",fg=MessageColors.CHAMELEOS.value))
     if random.random() > 0.1:
-        click.echo("But you manage to escape the tongue of Chameleos by the skin of your teeth.")
+        click.echo(style("But you manage to escape the tongue of Chameleos by the skin of your teeth.",fg=MessageColors.PLAYER.value))
         return False
     else:
-        click.echo("You became his lunch!")
+        click.echo(style("You became his lunch!",fg=MessageColors.BAD.value))
+        dungeon.player.take_damage(100)
         return True
     
 def chameleos_same_room_action():
     if dungeon.in_same_room():
         if(dungeon.chameleos.activity_level == ActivityLevels.SLUMBER):
-            click.echo("You see Chameleos sleeping soundly.")
+            click.echo(style("Chameleos is sleeping soundly.",fg=MessageColors.CHAMELEOS.value))
             chameleos_attack(dungeon.chameleos.activity_level)
         elif(dungeon.chameleos.activity_level == ActivityLevels.CRANKY):
-            click.echo("You see Chameleos glaring at you.")
+            click.echo(style("Chameleos is glaring at you.",fg=MessageColors.CHAMELEOS.value))
             chameleos_attack(dungeon.chameleos.activity_level)
         elif(dungeon.chameleos.activity_level == ActivityLevels.DISGRUNTLED):
-            click.echo("You see Chameleos getting ready to attack you.")
+            click.echo(style("Chameleos is getting ready to attack you.",fg=MessageColors.CHAMELEOS.value))
             chameleos_attack(dungeon.chameleos.activity_level)
         elif(dungeon.chameleos.activity_level == ActivityLevels.FURIOUS):
-            click.echo("You see Chameleos charging at you.")
-            chameleos_attack(dungeon.chameleos.activity_level)
+            click.echo(style("Chameleos is charging at you.",fg=MessageColors.CHAMELEOS.value))
+            chameleos_attack(dungeon.chameleos.activity_level)      
         elif(dungeon.chameleos.activity_level == ActivityLevels.BLOODTHIRSTY):
-            click.echo("You see Chameleos salivating as though his dinner has been served!")
+            click.echo(style("Chameleos is salivating as though his dinner has been served!",fg=MessageColors.CHAMELEOS.value))
             chameleos_attack(dungeon.chameleos.activity_level)
         return True
     else:
@@ -102,96 +104,95 @@ def chameleos_same_room_action():
 def go(direction):
     if dungeon.player.position == dungeon.chameleos.position:
         if random.random() > 0.4:
-            click.echo("You manage to escape the tongue of Chameleos by the skin of your teeth.")
+            click.echo(style("You manage to escape the tongue of Chameleos by the skin of your teeth.",fg=MessageColors.PLAYER.value))
         else:
-            click.echo("Chameleos has eaten you.")
-            SystemExit()
+            click.echo(style("Chameleos has eaten you.",fg=MessageColors.BAD.value))
     if dungeon.move_player(direction):
-        click.echo(f"You move to {dungeon.player.position.room_name}")
+        click.echo(style(f"ROOM: {dungeon.player.position.room_name}",fg=MessageColors.LOCATION.value))
         if not dungeon.chameleos.activity_level == ActivityLevels.SLUMBER:
             chameleos_steps(dungeon.chameleos.activity_level.value)
     if dungeon.player.position.is_exit:
-        click.echo("This is an exit!")
+        click.echo(style("This is an exit!",fg=MessageColors.PLAYER.value))
     chameleos_same_room_action()
 
 
 @click.command()
 def look():
     for direction in dungeon.rooms[dungeon.player.position].items():
-        click.echo(f"There is a room to the {direction[0]}.")
+        click.echo(style(f"There is a room to the {direction[0]}.",fg=MessageColors.PLAYER.value))
     for treasure in dungeon.player.position.contents.keys():
-        click.echo(f"({treasure}) There is a {dungeon.player.position.contents[treasure].name} here.")
+        click.echo(style(f"({treasure}) There is a {dungeon.player.position.contents[treasure].name} here.",fg=MessageColors.TREASURE.value))
     if dungeon.player.position.is_exit:
-        click.echo("This is an exit!")
+        click.echo(style("This is an exit!",fg=MessageColors.PLAYER.value))
     
 @click.command()
 def exit():
     if dungeon.player.position.is_exit:
         end_game(EndState.WON,dungeon)
     else:
-        click.echo("There is no exit here!")
+        click.echo(style("There is no exit here!",fg=MessageColors.BAD.value))
 
 @click.command()
 def inventory():
     # print(dungeon.player.position.contents)
     count = 1
     for item in dungeon.player.inventory.keys():
-        click.echo(f"({item}) {dungeon.player.inventory[item].name}")
+        click.echo(style(f"({item}) {dungeon.player.inventory[item].name}",fg=MessageColors.TREASURE.value))
 
 @click.command()
 @click.argument("treasure_key", type=str)
 def grab(treasure_key):
     if treasure_key not in dungeon.player.position.contents:
-        click.echo("That is not a real treasure.")
+        click.echo(style("That is not a real treasure.",MessageColors.BAD.value))
         return
     else:
         element = dungeon.player.position.contents.pop(treasure_key)
         dungeon.player.inventory[str(treasure_key)] = element
         dungeon.noise_scale += 1
-        click.echo(f"You have picked up the {element.name}.")
+        click.echo(style(f"You have picked up the {element.name}.",fg=MessageColors.GOOD.value))
 
 @click.command()
 @click.argument("treasure_key", type=str)
 def drop(treasure_key):
     if treasure_key not in dungeon.player.inventory.keys():
-        click.echo("You don't have that treasure.")
+        click.echo(style("You don't have that treasure.",fg=MessageColors.BAD.value))
         return
     else:
         element = dungeon.player.inventory.pop(treasure_key)
         dungeon.player.position.contents[str(treasure_key)] = element
-        click.echo(f"You have dropped the {element.name}.")
+        click.echo(style(f"You have dropped the {element.name}.",fg=MessageColors.BAD.value))
 
 @click.command()
 @click.argument("treasure_key", type=str)
 def appraise(treasure_key):
     if treasure_key in dungeon.player.position.contents.keys():
-        click.echo("Pick up the treasure before you appraise it.")
+        click.echo(style("Pick up the treasure before you appraise it.",fg=MessageColors.BAD.value))
         return
     elif treasure_key not in dungeon.player.inventory.keys():
-        click.echo("There is no such treasure.")
+        click.echo(style("There is no such treasure.",fg=MessageColors.BAD.value))
         return
     else:
         t_name = dungeon.player.inventory[treasure_key].name
         t_desc = dungeon.player.inventory[treasure_key].desc
         t_value = dungeon.player.inventory[treasure_key].value
         t_weight = dungeon.player.inventory[treasure_key].weight
-        click.echo(f"{t_name} is a treasure worth {t_value} gold pieces. It weighs {t_weight} pounds. {t_desc}")
+        click.echo(style(f"{t_name} is a treasure worth {t_value} gold pieces. It weighs {t_weight} pounds. {t_desc}",fg=MessageColors.TREASURE.value))
 
 @click.command()
 def listen():
-    print("Player Location: ",dungeon.player.position)
-    print("Chameleos Location: ",dungeon.chameleos.position)
+    # print("Player Location: ",dungeon.player.position)
+    # print("Chameleos Location: ",dungeon.chameleos.position)
     if(dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)):
         if dungeon.chameleos.activity_level == ActivityLevels.SLUMBER:
-            click.echo(f"You hear an odd snoring sound coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.")
+            click.echo(style(f"You hear an odd snoring sound coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.",MessageColors.PLAYER.value))
         elif dungeon.chameleos.activity_level == ActivityLevels.CRANKY:
-            click.echo(f"You hear a slight chittering sound coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.")
+            click.echo(style(f"You hear a slight chittering sound coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.",fg=MessageColors.PLAYER.value))
         elif dungeon.chameleos.activity_level == ActivityLevels.DISGRUNTLED:
-            click.echo(f"You hear a loud chittering sound coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.")
+            click.echo(style(f"You hear a loud chittering sound coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.",fg=MessageColors.PLAYER.value))
         elif dungeon.chameleos.activity_level == ActivityLevels.FURIOUS:
-            click.echo(f"You hear a sound much like a wet sponge being thrown at a wall from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.")
+            click.echo(style(f"You hear a sound much like a wet sponge being thrown at a wall from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.", fg=MessageColors.PLAYER.value))
         elif dungeon.chameleos.activity_level == ActivityLevels.BLOODTHIRSTY:
-            click.echo(f"You hear an ear-piercing scream coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.")
+            click.echo(style(f"You hear an ear-piercing scream coming from the room to the {dungeon.is_neighbor(dungeon.player.position,dungeon.chameleos.position)}.",fg=MessageColors.PLAYER.value))
 
 @click.command()
 def scream():
@@ -203,7 +204,7 @@ def scream():
 @click.command()
 def wait():
     if not dungeon.chameleos.activity_level == ActivityLevels.SLUMBER:
-        click.echo("You wait for a brief moment.")
+        click.echo(style("You wait for a brief moment.",fg=MessageColors.PLAYER.value))
         chameleos_steps(dungeon.chameleos.activity_level.value)
     chameleos_same_room_action()
 
@@ -212,19 +213,23 @@ def wait():
 def shrimpify():
     if dungeon.player.position.shrimpified:
         if random.random() > 0.5:
-            click.echo("You already placed shrimp in this room. Can we leave? It's starting to smell.")
+            click.echo(style("You already placed shrimp in this room. Can we leave? It's starting to smell.",fg=MessageColors.BAD.value))
         else:
-            click.echo("This room is already shrimpified. You don't want to be part of the meal do you?")
+            click.echo(style("This room is already shrimpified. You don't want to be part of the meal do you?",fg=MessageColors.SHRIMP.value))
     else:
-        click.echo("A massive, dragon-sized shrimp appears out of your storage ring.")
-        random_message_index = random.randint(0,len(shrimp_placement_messages))
-        click.echo(shrimp_placement_messages[random_message_index])
+        click.echo(style("A massive, dragon-sized shrimp appears out of your storage ring.",fg=MessageColors.SHRIMP.value))
+        random_message_index = random.randint(0,len(shrimp_placement_messages)-1)
+        click.echo(style(shrimp_placement_messages[random_message_index],fg=MessageColors.SHRIMP.value))
         dungeon.player.shrimpify(dungeon.player.position)
     chameleos_same_room_action()
 
 @click.command()
 def status():
     dungeon.player.display_health_status()
+
+@click.command()
+def here():
+    click.echo(style("ROOM: " +dungeon.player.position.room_name,fg=MessageColors.LOCATION.value))
     
 
 
@@ -259,11 +264,12 @@ cli.add_command(scream)
 cli.add_command(wait)
 cli.add_command(shrimpify)
 cli.add_command(status)
+cli.add_command(here)
 
 if __name__ == "__main__":
     while dungeon.player.hp > 0:
         if first_room:
-            click.echo("ROOM: " + dungeon.player.position.room_name)
+            click.echo(style("ROOM: " + dungeon.player.position.room_name,fg=MessageColors.LOCATION.value))
             first_room = False
         # click.echo(dungeon.rooms)
         cmd = click.prompt("What do you want to do?",type=str)

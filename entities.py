@@ -1,6 +1,8 @@
 from room import Room
 from enum import Enum
 import click
+from click import style
+from dungeon_colors import MessageColors
 from end_states import EndState,end_game
 
 class ActivityLevels(Enum):
@@ -41,7 +43,7 @@ class Player:
         elif self._hp == 1:
             click.echo("Uhh... Maybe you should see a doctor or something. Like really soon.")
         else:
-            click.echo("You are dead.")
+            click.echo(style("You are dead.", MessageColors.BAD))
 
     @property
     def shrimp_count(self):
