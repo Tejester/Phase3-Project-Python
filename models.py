@@ -3,6 +3,13 @@ from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
+
+class Score(Base):
+    __tablename__ = 'scores'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    score = Column(Integer, nullable=False)
+
 class Weapon(Base):
     __tablename__ = 'weapons'
     id = Column(Integer, primary_key=True)
@@ -16,6 +23,7 @@ class Hero(Base):
     name = Column(String)
     health = Column(Integer)
     damage = Column(Integer)
+    score = Column(Integer)  
 
 class Enemy(Base):
     __tablename__ = 'enemies'
